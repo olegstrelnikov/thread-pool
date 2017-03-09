@@ -15,7 +15,7 @@
 
 class ThreadPool {
 public:
-	ThreadPool(std::size_t threadNumber) : active(true) {
+	ThreadPool(std::size_t threadNumber, std::size_t usec = 1) : active_(true), usec_(usec) {
 		threads_.reserve(threadNumber);
 		for (; threadNumber; --threadNumber) {
 			threads_.emplace_back(&ThreadPool::worker_, this);
@@ -28,12 +28,15 @@ public:
 	}
 	~ThreadPool() {
 		while (true) {
-			std::lock_guard<std::mutex> guard(m_);
-			if (tasks_.empty()) {
-				break;
+			{
+				std::lock_guard<std::mutex> guard(m_);
+				if (tasks_.empty()) {
+					break;
+				}
 			}
+			std::this_thread::sleep_for(std::chrono::microseconds(usec_));
 		}
-		active = false;
+		active_ = false;
 		for (auto& thread: threads_) {
 			thread.join();
 		}
@@ -41,7 +44,7 @@ public:
 private:
 	void worker_() {
 		task_t task = nullptr;
-		while (active) {
+		while (active_) {
 			{
 				std::lock_guard<std::mutex> guard(m_);
 				if (!tasks_.empty()) {
@@ -52,10 +55,13 @@ private:
 			if (task) {
 				task();
 				task = nullptr;
+			} else {
+				std::this_thread::sleep_for(std::chrono::microseconds(usec_));
 			}
 		}
 	}
-	bool active;
+	bool active_;
+	std::size_t usec_;
 	std::list<task_t> tasks_;
 	std::mutex m_;
 	std::vector<std::thread> threads_;
