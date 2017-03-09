@@ -21,11 +21,12 @@ template <std::size_t N> void f() {
 	static_assert(N <= FUNCTIONS, "");
 	++calls[N - 1];
 	thread_ids[N - 1] = std::this_thread::get_id();
+	std::this_thread::sleep_for(std::chrono::microseconds(1));
 }
 
 int main() {
 	std::size_t fails = 0;
-	for (std::size_t j = 0; j < 1000; ++j) {
+	for (std::size_t j = 0; j < 10000; ++j) {
 		{
 			ThreadPool threadPool(4);
 			threadPool.addTask(f<1>);
