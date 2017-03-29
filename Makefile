@@ -1,0 +1,47 @@
+INCLUDE=./include
+LIBS=-lpthread
+
+COMPILER=g++ -std=c++11 -I"$(INCLUDE)" -Wall -c
+COMPILER_DEBUG=$(COMPILER) -O0 -g3
+COMPILER_RELEASE=$(COMPILER) -O3 -DNDEBUG
+LINKER=g++ $(LIBS)
+
+DEBUG_FOLDER=Debug
+RELEASE_FOLDER=Release
+
+SOURCE=test/main.cpp
+OBJ=main.o
+EXE=thread-pool-example
+RELEASE_OBJ=$(RELEASE_FOLDER)/$(OBJ)
+DEBUG_OBJ=$(DEBUG_FOLDER)/$(OBJ)
+RELEASE_EXE=$(RELEASE_FOLDER)/$(EXE)
+DEBUG_EXE=$(DEBUG_FOLDER)/$(EXE)
+
+HEADER=$(INCLUDE)/thread-pool.hpp
+
+all: release
+
+release: $(RELEASE_FOLDER) $(RELEASE_EXE)
+
+$(RELEASE_EXE): $(RELEASE_OBJ)
+	$(LINKER) -o "$@" "$<"
+
+$(RELEASE_OBJ): $(SOURCE) $(HEADER)
+	$(COMPILER_RELEASE) -o "$@" $(SOURCE)
+
+$(RELEASE_FOLDER):
+	mkdir $(RELEASE_FOLDER)
+
+debug: $(DEBUG_FOLDER) $(DEBUG_EXE)
+
+$(DEBUG_EXE): $(DEBUG_OBJ)
+	$(LINKER) -o "$@" "$<"
+
+$(DEBUG_OBJ): $(SOURCE) $(HEADER)
+	$(COMPILER_DEBUG) -o "$@" $(SOURCE)
+
+$(DEBUG_FOLDER):
+	mkdir $(DEBUG_FOLDER)
+
+clean:
+	rm -rf $(DEBUG_FOLDER) $(RELEASE_FOLDER)
